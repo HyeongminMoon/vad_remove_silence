@@ -176,10 +176,10 @@ def frame_generator(frame_duration_ms, audio, sample_rate):
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-path', type=str, default='files/', help='path to video')
+parser.add_argument('-path', type=str, default='files', help='path to video')
 parser.add_argument('-threshold-duration', type=float, default=0.2, help='threshold duration in seconds')
 parser.add_argument('-check', type=bool, default=True, help='path to text file')
-parser.add_argument('-p', type=str, default='results/', help='path to video')
+parser.add_argument('-p', type=str, default='results', help='path to video')
 parser.add_argument('--threshold-level', type=float, default=-35, help='threshold level in dB')
 parser.add_argument('--constant', type=float, default=0, help='duration constant transform value')
 parser.add_argument('--sublinear', type=float, default=0, help='duration sublinear transform factor')
@@ -196,7 +196,8 @@ args = parser.parse_args()
 
 if __name__ == '__main__':
     
-    dir_path = args.path +'*.wav'
+    dir_path = os.path.join(os.getcwd() ,args.path, '*.wav')
+    print(dir_path)
     paths = glob.glob(dir_path)
     file_num = len(paths)
     vad = webrtcvad.Vad()
@@ -231,7 +232,7 @@ if __name__ == '__main__':
         audio_end_frame = int(end_idx/100.0*sample_rate*2)
         audio_result_frames = audio_end_frame - audio_start_frame
 
-        dst = args.p + path.split(args.path)[-1]
+        dst = os.path.join(os.getcwd(), args.p, path.split(args.path)[-1])
         if not os.path.isdir(args.p):
             os.mkdir(args.p)
 
