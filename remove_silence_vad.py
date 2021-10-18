@@ -174,6 +174,9 @@ def frame_generator(frame_duration_ms, audio, sample_rate):
     
     return frames
 
+def match_target_amplitude(sound, target_dBFS):
+    change_in_dBFS = target_dBFS - sound.dBFS
+    return sound.apply_gain(change_in_dBFS)
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-path', type=str, default='files', help='path to video')
@@ -200,20 +203,36 @@ if __name__ == '__main__':
     print(dir_path)
     paths = glob.glob(dir_path)
     file_num = len(paths)
-    vad = webrtcvad.Vad()
-    vad.set_mode(3)
+    
+    start_idx = 0
+    end_idx = 0
     
     print('Num of file: ', file_num)
     cnt = 0
+    
+    print('Audio Normalization...')
+    if not os.path.isdir('norm'):
+        os.mkdir('norm')
+    
     for path in paths:
+        
+        dst = os.path.join(os.getcwd(), 'norm', path.split(args.path)[-1][1:])
+        sound = AudioSegment.from_wav(path)
+        normalized_sound = match_target_amplitude(sound, -30.0)
+        normalized_sound.export(dst, format="wav")
+    
+    for path in paths:
+        dst = os.path.join(os.getcwd(), args.p, path.split(args.path)[-1][1:])
+        path = os.path.join(os.getcwd(), 'norm', path.split(args.path)[-1][1:])
         cnt += 1
         print(cnt, '/', file_num, path)
         sample_rate, samples = wavfile.read(path)
         # print('sample rate : {}, samples.shape : {}'.format(sample_rate, samples.shape))
 
-        
+        vad = webrtcvad.Vad()
+        vad.set_mode(3)
         # 10, 20, or 30
-        frame_duration = 10 # ms
+        frame_duration = 30 # ms
         frames = frame_generator(frame_duration, samples, sample_rate)
         flag = True
         for i, frame in enumerate(frames):
@@ -225,19 +244,29 @@ if __name__ == '__main__':
                     end_idx = i
         if start_idx > 1:
             start_idx -= 1
-        if end_idx < len(frames):
-            end_idx += 1
-
-        audio_start_frame = int(start_idx/100.0*sample_rate*2)
-        audio_end_frame = int(end_idx/100.0*sample_rate*2)
+        end_idx += 2
+        
+        # print(end_idx, len(frames))
+        # print(float(start_idx)/100.0*float(sample_rate*2.0*3.0)
+        audio_start_frame = int(start_idx/100.0*sample_rate*2*3)
+        if end_idx >= len(frames):
+            # print("a")
+            audio_end_frame = len(samples)
+        else:
+            audio_end_frame = int(end_idx/100.0*sample_rate*2*3)
         audio_result_frames = audio_end_frame - audio_start_frame
 
-        dst = os.path.join(os.getcwd(), args.p, path.split(args.path)[-1])
+        # audio_start_frame = 0
+        # audio_end_frame = len(samples)
+        # audio_result_frames = audio_end_frame - audio_start_frame
+        
+        
+        # print(dst)
         if not os.path.isdir(args.p):
             os.mkdir(args.p)
 
         wav = wave.open(path, mode='rb')
-        out_wav = wave.open(dst, mode='wb')
+        out_wav = wave.open(dst, mode='w')
         channels = wav.getnchannels()
         sample_width = wav.getsampwidth()
         audio_frame_rate = wav.getframerate()
@@ -262,13 +291,14 @@ if __name__ == '__main__':
 
         seg = AudioSegment.silent(duration=200)
         song = AudioSegment.from_wav(dst)
-
+        
         if start_gap < 0.2:
             start_gap += 0.2
             song = seg + song
         if end_gap < 0.2:
             end_gap += 0.2
             song = song + seg
+        # print(song)
         song.export(dst, format="wav")
     
         print("start/end gap: ", round(start_gap, 2), round(end_gap, 2))
