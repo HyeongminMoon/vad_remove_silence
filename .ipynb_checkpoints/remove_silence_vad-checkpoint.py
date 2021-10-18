@@ -183,7 +183,7 @@ parser.add_argument('-path', type=str, default='files', help='path to video')
 parser.add_argument('-threshold-duration', type=float, default=0.2, help='threshold duration in seconds')
 parser.add_argument('-check', type=bool, default=True, help='path to text file')
 parser.add_argument('-p', type=str, default='results', help='path to video')
-parser.add_argument('--threshold-level', type=float, default=-35, help='threshold level in dB')
+parser.add_argument('--threshold-level', type=float, default=-40, help='threshold level in dB')
 parser.add_argument('--constant', type=float, default=0, help='duration constant transform value')
 parser.add_argument('--sublinear', type=float, default=0, help='duration sublinear transform factor')
 parser.add_argument('--linear', type=float, default=0.1, help='duration linear transform factor')
@@ -218,7 +218,7 @@ if __name__ == '__main__':
         
         dst = os.path.join(os.getcwd(), 'norm', path.split(args.path)[-1][1:])
         sound = AudioSegment.from_wav(path)
-        normalized_sound = match_target_amplitude(sound, -30.0)
+        normalized_sound = match_target_amplitude(sound, -35.0)
         normalized_sound.export(dst, format="wav")
     
     for path in paths:
@@ -242,13 +242,15 @@ if __name__ == '__main__':
                     flag = False
                 else:
                     end_idx = i
-        if start_idx > 1:
-            start_idx -= 1
-        end_idx += 2
+        start_idx -= 1
+        end_idx += 1
         
         # print(end_idx, len(frames))
         # print(float(start_idx)/100.0*float(sample_rate*2.0*3.0)
-        audio_start_frame = int(start_idx/100.0*sample_rate*2*3)
+        if start_idx <= 0:
+            audio_start_frame = 0
+        else:
+            audio_start_frame = int(start_idx/100.0*sample_rate*2*3)
         if end_idx >= len(frames):
             # print("a")
             audio_end_frame = len(samples)
