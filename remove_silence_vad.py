@@ -238,7 +238,7 @@ if __name__ == '__main__':
         
         dst2 = os.path.join(os.getcwd(), 'norm2', path.split(args.path)[-1][1:])
         sample_rate, samples = wavfile.read(dst)
-        output = butter_bandpass_filter(samples, 100, 250, sample_rate)
+        output = butter_bandpass_filter(samples, 50, 500, sample_rate)
         # output += butter_bandpass_filter(samples, 250, 7000, sample_rate)
         wavfile.write(dst2, sample_rate, output.astype(np.int16))
 
