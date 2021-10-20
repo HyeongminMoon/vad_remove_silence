@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "C:\Users\pcd\Desktop\4 dreambit silence_vad\vad_remove_silence-main\remove_silence_vad.py", line 285, in <module>
+    if silences[0][0] == 0.0:
+IndexError: list index out of range

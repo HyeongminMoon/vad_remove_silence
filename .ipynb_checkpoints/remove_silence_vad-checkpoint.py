@@ -11,6 +11,19 @@ import wave
 from pydub import AudioSegment
 import collections
 import argparse
+from scipy.signal import butter, lfilter
+
+def butter_bandpass(lowcut, highcut, fs, order=5):
+    nyq = 0.5 * fs
+    low = lowcut / nyq
+    high = highcut / nyq
+    b, a = butter(order, [low, high], btype='band')
+    return b, a
+
+def butter_bandpass_filter(data, lowcut, highcut, fs, order=5):
+    b, a = butter_bandpass(lowcut, highcut, fs, order=order)
+    y = lfilter(b, a, data)
+    return y
 
 def find_silences(filename):
     global args
@@ -213,17 +226,26 @@ if __name__ == '__main__':
     print('Audio Normalization...')
     if not os.path.isdir('norm'):
         os.mkdir('norm')
-    
+    if not os.path.isdir('norm2'):
+        os.mkdir('norm2')
+        
     for path in paths:
         
         dst = os.path.join(os.getcwd(), 'norm', path.split(args.path)[-1][1:])
         sound = AudioSegment.from_wav(path)
         normalized_sound = match_target_amplitude(sound, -35.0)
         normalized_sound.export(dst, format="wav")
-    
+        
+        dst2 = os.path.join(os.getcwd(), 'norm2', path.split(args.path)[-1][1:])
+        sample_rate, samples = wavfile.read(dst)
+        output = butter_bandpass_filter(samples, 100, 250, sample_rate)
+        # output += butter_bandpass_filter(samples, 250, 7000, sample_rate)
+        wavfile.write(dst2, sample_rate, output.astype(np.int16))
+
     for path in paths:
         dst = os.path.join(os.getcwd(), args.p, path.split(args.path)[-1][1:])
-        path = os.path.join(os.getcwd(), 'norm', path.split(args.path)[-1][1:])
+        dst2 = os.path.join(os.getcwd(), 'norm', path.split(args.path)[-1][1:])
+        path = os.path.join(os.getcwd(), 'norm2', path.split(args.path)[-1][1:])
         cnt += 1
         print(cnt, '/', file_num, path)
         sample_rate, samples = wavfile.read(path)
@@ -267,7 +289,7 @@ if __name__ == '__main__':
         if not os.path.isdir(args.p):
             os.mkdir(args.p)
 
-        wav = wave.open(path, mode='rb')
+        wav = wave.open(dst2, mode='rb')
         out_wav = wave.open(dst, mode='w')
         channels = wav.getnchannels()
         sample_width = wav.getsampwidth()
@@ -282,23 +304,26 @@ if __name__ == '__main__':
         out_wav.close()
 
         silences, including_end = find_silences(dst)
-        if silences[0][0] == 0.0:
-            start_gap = silences[0][1] - silences[0][0]
+        if len(silences) == 0:
+            start_gap, end_gap = 0, 0
         else:
-            start_gap = 0
-        if including_end:
-            end_gap = silences[-1][1] - silences[-1][0]
-        else:
-            end_gap = 0
+            if silences[0][0] == 0.0:
+                start_gap = silences[0][1] - silences[0][0]
+            else:
+                start_gap = 0
+            if including_end:
+                end_gap = silences[-1][1] - silences[-1][0]
+            else:
+                end_gap = 0
 
-        seg = AudioSegment.silent(duration=200)
+        seg = AudioSegment.silent(duration=210)
         song = AudioSegment.from_wav(dst)
         
-        if start_gap < 0.2:
-            start_gap += 0.2
+        if start_gap < 0.21:
+            start_gap += 0.21
             song = seg + song
-        if end_gap < 0.2:
-            end_gap += 0.2
+        if end_gap < 0.21:
+            end_gap += 0.21
             song = song + seg
         # print(song)
         song.export(dst, format="wav")
