@@ -1,5 +1,6 @@
 # `vad remove silence`
 
+
 Using VAD(Voice Activity Detection) and Sound normalization, Remove start/end silence on .wav file.
 
 ## Usage
