@@ -1,4 +1,4 @@
-# `vad remove silence`
+# `vad-remove-silence`
 
 This will remove the start&end silence from your audio(.wav file)
 
