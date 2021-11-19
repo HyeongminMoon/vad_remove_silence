@@ -8,6 +8,11 @@ Enhancing by adding VAD(Voice Activity Detection) to video remove silence.
 <pre>
 <code>
 mkdir files
+</code>
+</pre>
+and put your .wav files in ./files
+<pre>
+<code>
 python vremove_silence_vad.py
 </code>
 </pre>
