@@ -13,7 +13,7 @@ mkdir files
 and put your .wav files in ./files
 <pre>
 <code>
-python vremove_silence_vad.py
+python remove_silence_vad.py
 </code>
 </pre>
 
